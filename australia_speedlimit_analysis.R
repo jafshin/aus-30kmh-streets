@@ -104,6 +104,13 @@ process_city <- function(city) {
     ) %>%
     filter(!is.na(maxspeed_kmh))
 
+  # Total km of ALL public car roads (tagged + untagged) — true denominator
+  total_km_all <- roads_public %>%
+    st_transform(city$epsg) %>%
+    mutate(length_km = as.numeric(st_length(geometry)) / 1000) %>%
+    pull(length_km) %>%
+    sum(na.rm = TRUE)
+
   roads_proj <- roads %>%
     st_transform(city$epsg) %>%
     mutate(length_km = as.numeric(st_length(geometry)) / 1000)
@@ -113,12 +120,13 @@ process_city <- function(city) {
   # Extract per-speed stats and geometries
   speed_data <- lapply(SPEEDS, function(spd) {
     r   <- filter(roads_proj, maxspeed_kmh == spd)
-    km  <- sum(r$length_km, na.rm = TRUE)
-    n_r <- nrow(r)
-    pct <- round(km / total_km * 100, 2)
+    km      <- sum(r$length_km, na.rm = TRUE)
+    n_r     <- nrow(r)
+    pct     <- round(km / total_km     * 100, 2)
+    pct_all <- round(km / total_km_all * 100, 3)
 
-    cat(sprintf("[%s] %d km/h: %.1f km (%s segs, %.2f%%)\n",
-                n, spd, km, format(n_r, big.mark = ","), pct))
+    cat(sprintf("[%s] %d km/h: %.1f km (%s segs, %.2f%% of tagged, %.3f%% of all)\n",
+                n, spd, km, format(n_r, big.mark = ","), pct, pct_all))
 
     # Simplified WGS84 for web maps (reduces 40 km/h file size ~70%)
     r_web <- r %>%
@@ -128,7 +136,7 @@ process_city <- function(city) {
       rename(road_name = name) %>%
       select(osm_id, road_name, highway, maxspeed_kmh, length_km)
 
-    list(speed = spd, km = km, n = n_r, pct = pct, roads_web = r_web)
+    list(speed = spd, km = km, n = n_r, pct = pct, pct_all = pct_all, roads_web = r_web)
   })
   names(speed_data) <- as.character(SPEEDS)
 
@@ -280,8 +288,8 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
       cat(sprintf("  %s  (%d KB)\n", gj_path, sz))
 
       sprintf(
-        '"%d":{km:%s,segs:%d,pct:%s,file:"%s",bounds:[[%s,%s],[%s,%s]]}',
-        spd, round(sd$km, 1), sd$n, sd$pct,
+        '"%d":{km:%s,segs:%d,pct:%s,pct_all:%s,file:"%s",bounds:[[%s,%s],[%s,%s]]}',
+        spd, round(sd$km, 1), sd$n, sd$pct, sd$pct_all,
         gj_file,
         bb["ymin"], bb["xmin"], bb["ymax"], bb["xmax"]
       )
@@ -364,8 +372,13 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '.chart-box{padding:20px;}\n',
     '.chart-heading{font-size:11px;font-weight:700;color:var(--muted);',
     'text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}\n',
-    '.chart-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;',
-    'padding-bottom:14px;border-bottom:1px solid var(--border);}\n',
+    '.chart-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;',
+    'padding-bottom:12px;border-bottom:1px solid var(--border);}\n',
+    '.chart-toggle{display:flex;gap:4px;margin-bottom:12px;}\n',
+    '.mode-btn{padding:4px 12px;border:1.5px solid var(--border);background:var(--card);',
+    'border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;',
+    'color:var(--muted);transition:all .15s;}\n',
+    '.mode-btn.active{background:var(--text);color:#fff;border-color:var(--text);}\n',
 
     # Footer
     'footer{font-size:11px;color:var(--muted);background:var(--card);',
@@ -427,15 +440,16 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '<div class="stat-lbl">km of roads</div></div>\n',
     '        <div class="stat"><div class="stat-val" id="s-segs">–</div>',
     '<div class="stat-lbl">road segments</div></div>\n',
-    '        <div class="stat full"><div class="stat-val" id="s-pct">–</div>',
-    '<div class="stat-lbl">% of roads with a recorded speed limit</div></div>\n',
     '      </div>\n',
     '    </div>\n',
     '    <div class="chart-box">\n',
     '      <div class="chart-heading">City Comparison</div>\n',
-    '      <p class="chart-desc">Total length of roads at the selected speed limit',
-    ' across all five cities, based on OpenStreetMap tags. Only publicly accessible,',
-    ' car-permitted roads are included. Click a city tab to see its roads on the map.</p>\n',
+    '      <p class="chart-desc">Compare cities by absolute length or as a share of',
+    ' all publicly accessible car roads.</p>\n',
+    '      <div class="chart-toggle">\n',
+    '        <button class="mode-btn active" id="mode-km" onclick="setChartMode(\'km\')">km</button>\n',
+    '        <button class="mode-btn" id="mode-pct" onclick="setChartMode(\'pct\')">% of network</button>\n',
+    '      </div>\n',
     '      <canvas id="chart"></canvas>\n',
     '    </div>\n',
     '  </div>\n',
@@ -448,7 +462,9 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     ' All data is sourced from <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a>,',
     ' a volunteer-maintained platform. Speed limit tags may be incomplete or out of date.',
     ' Only roads with an explicit maxspeed tag are included.',
-    ' The authors accept no responsibility for the accuracy of this information.</div>\n',
+    ' The authors accept no responsibility for the accuracy of this information.',
+    ' OSM metropolitan extracts provided by <a href="https://interline.io" target="_blank">Interline.io</a>;',
+    ' geographic boundaries reflect Interline metro area definitions.</div>\n',
     '    <div class="footer-block"><span class="badge">LICENCE</span>',
     ' Code: <a href="https://github.com/jafshin/aus-30kmh-streets/blob/main/LICENSE"',
     ' target="_blank">MIT</a> &nbsp;·&nbsp;',
@@ -497,7 +513,9 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '    tooltip:{callbacks:{label:function(ctx){\n',
     '      if(!activeSpeed) return "";\n',
     '      var s=STATS[CITY_NAMES[ctx.dataIndex]].speeds[activeSpeed];\n',
-    '      return [s.km+" km","Segments: "+s.segs.toLocaleString()];\n',
+    '      return chartMode==="km"\n',
+    '        ?[s.km+" km","Segments: "+s.segs.toLocaleString()]\n',
+    '        :[s.pct_all+"% of car road network","Segments: "+s.segs.toLocaleString()];\n',
     '    }}}},\n',
     '    scales:{y:{beginAtZero:true,title:{display:true,text:"km"},ticks:{font:{size:11}}},\n',
     '            x:{grid:{display:false},ticks:{font:{size:11}}}}}\n',
@@ -517,6 +535,28 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     'var activeLayer=null;\n',
     'var geojsonCache={};\n\n',
 
+    # chart mode toggle
+    'var chartMode="km";\n',
+    'function setChartMode(mode){\n',
+    '  chartMode=mode;\n',
+    '  document.getElementById("mode-km").classList.toggle("active",mode==="km");\n',
+    '  document.getElementById("mode-pct").classList.toggle("active",mode==="pct");\n',
+    '  updateChart();\n',
+    '}\n',
+    'function updateChart(){\n',
+    '  if(!activeSpeed) return;\n',
+    '  barChart.data.datasets[0].data=CITY_NAMES.map(function(n){\n',
+    '    var s=STATS[n].speeds[activeSpeed];\n',
+    '    return chartMode==="km"?s.km:s.pct_all;\n',
+    '  });\n',
+    '  barChart.data.datasets[0].backgroundColor=CITY_NAMES.map(function(n,i){\n',
+    '    return i===activeCityIdx?STATS[n].color+"cc":STATS[n].color+"33";\n',
+    '  });\n',
+    '  barChart.options.scales.y.title.text=\n',
+    '    chartMode==="km"?"km":"% of car road network";\n',
+    '  barChart.update("none");\n',
+    '}\n\n',
+
     # setSpeed
     'function setSpeed(spd){\n',
     '  activeSpeed=String(spd);\n',
@@ -532,14 +572,7 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '    b.style.borderColor=on?sc:"";\n',
     '    b.style.color=on?"#fff":"";\n',
     '  });\n',
-    '  // update chart data for new speed\n',
-    '  barChart.data.datasets[0].data=CITY_NAMES.map(function(n){\n',
-    '    return STATS[n].speeds[activeSpeed].km;\n',
-    '  });\n',
-    '  barChart.data.datasets[0].backgroundColor=CITY_NAMES.map(function(n,i){\n',
-    '    return i===activeCityIdx?STATS[n].color+"cc":STATS[n].color+"33";\n',
-    '  });\n',
-    '  barChart.update("none");\n',
+    '  updateChart();\n',
     '  // reload map if a city is already selected\n',
     '  if(activeCityIdx>=0) loadCityLayer(activeCityIdx);\n',
     '}\n\n',
@@ -557,11 +590,7 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '    el.style.borderColor=on?cityColor:"";\n',
     '    el.style.color=on?"#fff":"";\n',
     '  });\n',
-    '  // chart highlight\n',
-    '  barChart.data.datasets[0].backgroundColor=CITY_NAMES.map(function(n,i){\n',
-    '    return i===idx?STATS[n].color+"cc":STATS[n].color+"33";\n',
-    '  });\n',
-    '  barChart.update("none");\n',
+    '  updateChart();\n',
     '  if(activeSpeed) loadCityLayer(idx);\n',
     '}\n\n',
 
@@ -578,8 +607,6 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '  document.getElementById("s-km").style.color=cityColor;\n',
     '  document.getElementById("s-segs").textContent=sd.segs.toLocaleString();\n',
     '  document.getElementById("s-segs").style.color=cityColor;\n',
-    '  document.getElementById("s-pct").textContent=sd.pct+"%";\n',
-    '  document.getElementById("s-pct").style.color=cityColor;\n',
     '  var cacheKey=cityName+"_"+activeSpeed;\n',
     '  if(geojsonCache[cacheKey]){\n',
     '    renderLayer(geojsonCache[cacheKey],cityColor,sd);\n',
