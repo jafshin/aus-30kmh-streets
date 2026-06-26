@@ -686,7 +686,7 @@ header .sub a:hover{text-decoration:underline;}
 .city-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-right:4px;align-self:center;white-space:nowrap;}
 .tab{padding:6px 16px;border:1.5px solid var(--border);background:var(--card);border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;transition:all .18s;white-space:nowrap;color:var(--text);}
 .tab:hover:not(.active){background:#f0f2f5;border-color:#bbb;}
-.main{display:grid;grid-template-columns:1fr 320px;flex:1;overflow:hidden;min-height:0;}
+.main{display:grid;grid-template-columns:1fr 380px;flex:1;overflow:hidden;min-height:0;}
 #map{width:100%;height:100%;}
 .loading-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.9);padding:16px 24px;border-radius:8px;font-size:14px;color:var(--muted);display:none;z-index:500;border:1px solid var(--border);}
 #map-wrap{position:relative;}
@@ -702,6 +702,9 @@ header .sub a:hover{text-decoration:underline;}
 .chart-heading{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
 .chart-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);}
 .chart-toggle{display:flex;gap:4px;margin-bottom:12px;}
+.context-text{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.network-total{margin-top:12px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.1px;}
+.network-total strong{color:var(--text);}
 .mode-btn{padding:4px 12px;border:1.5px solid var(--border);background:var(--card);border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);transition:all .15s;}
 .mode-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
 footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px solid var(--border);flex-shrink:0;}
@@ -716,6 +719,7 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
   .main{grid-template-columns:1fr;height:auto;}
   #map{height:65vw;min-height:300px;}
   .side{border-left:none;border-top:1px solid var(--border);}
+  .main{grid-template-columns:1fr;}
   .footer-inner{flex-direction:column;}
   .footer-block{border-right:none;border-bottom:1px solid var(--border);}
 }
@@ -745,14 +749,17 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
   <div class="side">
     <div class="stats">
       <div class="stats-heading" id="stats-heading">Select a speed &amp; city</div>
+      <p class="context-text" id="context-text">Select a speed limit and city to explore the data.</p>
       <div class="stat-grid">
         <div class="stat"><div class="stat-val" id="s-km">–</div><div class="stat-lbl">km of roads</div></div>
         <div class="stat"><div class="stat-val" id="s-segs">–</div><div class="stat-lbl">road segments</div></div>
+        <div class="stat full"><div class="stat-val" id="s-pct-all">–</div><div class="stat-lbl">% of public car road network</div></div>
       </div>
+      <p class="network-total" id="network-total"></p>
     </div>
     <div class="chart-box">
       <div class="chart-heading">City Comparison</div>
-      <p class="chart-desc">Compare cities by absolute length or as a share of all publicly accessible car roads.</p>
+      <p class="chart-desc">The <strong>km</strong> view shows absolute road length. Switch to <strong>% of network</strong> for a proportional comparison using the full public car road network as the denominator.</p>
       <div class="chart-toggle">
         <button class="mode-btn active" id="mode-km" onclick="setChartMode('km')">km</button>
         <button class="mode-btn" id="mode-pct" onclick="setChartMode('pct')">% of network</button>
@@ -800,11 +807,11 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 </script>
 <script>
 // ── Embedded stats (tiny) ─────────────────────────────
-var STATS={"Melbourne":{color:"#c0392b",totalSegs:333942,untaggedSegs:218693,taggedPct:34.5,speeds:{"30":{km:75.3,segs:595,pct:0.4,pct_all:0.152,file:"data/melbourne_30.geojson",bounds:[[-38.468576,144.2993976],[-37.6044633,145.3475161]]},"40":{km:1131.3,segs:10465,pct:6.08,pct_all:2.28,file:"data/melbourne_40.geojson",bounds:[[-38.5440516,144.2742339],[-37.3429823,145.8079468]]}}},
-"Sydney":{color:"#2980b9",totalSegs:175829,untaggedSegs:111775,taggedPct:36.4,speeds:{"30":{km:56.4,segs:325,pct:0.56,pct_all:0.242,file:"data/sydney_30.geojson",bounds:[[-34.0834795,150.7562181],[-33.6525045,151.3026131]]},"40":{km:578.1,segs:5926,pct:5.71,pct_all:2.48,file:"data/sydney_40.geojson",bounds:[[-34.0796905,150.6281295],[-33.6447895,151.3186733]]}}},
-"Brisbane":{color:"#27ae60",totalSegs:151562,untaggedSegs:75427,taggedPct:50.2,speeds:{"30":{km:21.4,segs:145,pct:0.2,pct_all:0.109,file:"data/brisbane_30.geojson",bounds:[[-27.6840921,152.7556923],[-27.0581665,153.2862756]]},"40":{km:756.4,segs:5885,pct:7.23,pct_all:3.86,file:"data/brisbane_40.geojson",bounds:[[-27.7185454,152.6755683],[-27.0171119,153.309878]]}}},
-"Adelaide":{color:"#e67e22",totalSegs:80907,untaggedSegs:48588,taggedPct:39.9,speeds:{"30":{km:3.4,segs:18,pct:0.05,pct_all:0.025,file:"data/adelaide_30.geojson",bounds:[[-34.9328733,138.5805019],[-34.9106955,138.6793609]]},"40":{km:563.4,segs:2568,pct:9.08,pct_all:4.1,file:"data/adelaide_40.geojson",bounds:[[-35.1883401,138.4801628],[-34.5969038,138.81762]]}}},
-"Perth":{color:"#8e44ad",totalSegs:129096,untaggedSegs:90844,taggedPct:29.6,speeds:{"30":{km:49.3,segs:321,pct:0.74,pct_all:0.249,file:"data/perth_30.geojson",bounds:[[-32.3275394,115.745504],[-31.7332696,116.0112529]]},"40":{km:269.1,segs:1731,pct:4.01,pct_all:1.36,file:"data/perth_40.geojson",bounds:[[-32.3576633,115.4504339],[-31.7121256,116.1030717]]}}}};
+var STATS={"Melbourne":{color:"#c0392b",totalKm:49651,totalSegs:333942,untaggedSegs:218693,taggedPct:34.5,speeds:{"30":{km:75.3,segs:595,pct:0.4,pct_all:0.152,file:"data/melbourne_30.geojson",bounds:[[-38.468576,144.2993976],[-37.6044633,145.3475161]]},"40":{km:1131.3,segs:10465,pct:6.08,pct_all:2.28,file:"data/melbourne_40.geojson",bounds:[[-38.5440516,144.2742339],[-37.3429823,145.8079468]]}}},
+"Sydney":{color:"#2980b9",totalKm:23301,totalSegs:175829,untaggedSegs:111775,taggedPct:36.4,speeds:{"30":{km:56.4,segs:325,pct:0.56,pct_all:0.242,file:"data/sydney_30.geojson",bounds:[[-34.0834795,150.7562181],[-33.6525045,151.3026131]]},"40":{km:578.1,segs:5926,pct:5.71,pct_all:2.48,file:"data/sydney_40.geojson",bounds:[[-34.0796905,150.6281295],[-33.6447895,151.3186733]]}}},
+"Brisbane":{color:"#27ae60",totalKm:19583,totalSegs:151562,untaggedSegs:75427,taggedPct:50.2,speeds:{"30":{km:21.4,segs:145,pct:0.2,pct_all:0.109,file:"data/brisbane_30.geojson",bounds:[[-27.6840921,152.7556923],[-27.0581665,153.2862756]]},"40":{km:756.4,segs:5885,pct:7.23,pct_all:3.86,file:"data/brisbane_40.geojson",bounds:[[-27.7185454,152.6755683],[-27.0171119,153.309878]]}}},
+"Adelaide":{color:"#e67e22",totalKm:13741,totalSegs:80907,untaggedSegs:48588,taggedPct:39.9,speeds:{"30":{km:3.4,segs:18,pct:0.05,pct_all:0.025,file:"data/adelaide_30.geojson",bounds:[[-34.9328733,138.5805019],[-34.9106955,138.6793609]]},"40":{km:563.4,segs:2568,pct:9.08,pct_all:4.1,file:"data/adelaide_40.geojson",bounds:[[-35.1883401,138.4801628],[-34.5969038,138.81762]]}}},
+"Perth":{color:"#8e44ad",totalKm:19832,totalSegs:129096,untaggedSegs:90844,taggedPct:29.6,speeds:{"30":{km:49.3,segs:321,pct:0.74,pct_all:0.249,file:"data/perth_30.geojson",bounds:[[-32.3275394,115.745504],[-31.7332696,116.0112529]]},"40":{km:269.1,segs:1731,pct:4.01,pct_all:1.36,file:"data/perth_40.geojson",bounds:[[-32.3576633,115.4504339],[-31.7121256,116.1030717]]}}}};
 var CITY_NAMES=["Melbourne","Sydney","Brisbane","Adelaide","Perth"];
 
 var SPEED_COLORS={"30":"#c0392b","40":"#d35400"};
@@ -828,7 +835,7 @@ var barChart=new Chart(document.getElementById("chart").getContext("2d"),{
       var s=STATS[CITY_NAMES[ctx.dataIndex]].speeds[activeSpeed];
       return chartMode==="km"
         ?[s.km+" km","Segments: "+s.segs.toLocaleString()]
-        :[s.pct_all+"% of car road network","Segments: "+s.segs.toLocaleString()];
+        :[s.pct_all+"% of network","Segments: "+s.segs.toLocaleString()];
     }}}},
     scales:{y:{beginAtZero:true,title:{display:true,text:"km"},ticks:{font:{size:11}}},
             x:{grid:{display:false},ticks:{font:{size:11}}}}}
@@ -863,15 +870,22 @@ function updateChart(){
     return i===activeCityIdx?STATS[n].color+"cc":STATS[n].color+"33";
   });
   barChart.options.scales.y.title.text=
-    chartMode==="km"?"km":"% of car road network";
+    chartMode==="km"?"km":"% of network";
   barChart.update("none");
 }
+
+var SPEED_CONTEXT = {
+  "30": "30 km/h zones are explicitly designated lower-speed areas, typically found in activity centres, shared zones or residential precincts where pedestrian safety is prioritised. In Victoria, councils can apply to trial or permanently designate 30 km/h zones under state speed zoning policy.",
+  "40": "40 km/h zones include local area traffic management precincts, shopping strips and areas with high pedestrian activity. They represent a middle tier between the standard urban default (50 km/h) and the slower 30 km/h zones found in pedestrian-priority areas."
+};
 
 function setSpeed(spd){
   activeSpeed=String(spd);
   var sc=SPEED_COLORS[activeSpeed];
   // header accent
   document.querySelector("header").style.borderBottomColor=sc;
+  var ctxEl=document.getElementById("context-text");
+  if(ctxEl) ctxEl.innerHTML=SPEED_CONTEXT[activeSpeed]||"";
   // speed buttons
   ["30","40"].forEach(function(s){
     var b=document.getElementById("btn-"+s);
@@ -911,10 +925,17 @@ function loadCityLayer(idx){
   // update stats panel immediately
   document.getElementById("stats-heading").textContent=
     cityName+" – "+activeSpeed+" km/h Streets";
+  var ntEl=document.getElementById("network-total");
+  if(ntEl){
+    var tkm=STATS[cityName].totalKm;
+    ntEl.innerHTML="out of <strong>"+tkm.toLocaleString()+"</strong> km total public car road network";
+  }
   document.getElementById("s-km").textContent=sd.km.toFixed(1);
   document.getElementById("s-km").style.color=cityColor;
   document.getElementById("s-segs").textContent=sd.segs.toLocaleString();
   document.getElementById("s-segs").style.color=cityColor;
+  document.getElementById("s-pct-all").textContent=sd.pct_all+"%";
+  document.getElementById("s-pct-all").style.color=cityColor;
   var cacheKey=cityName+"_"+activeSpeed;
   if(geojsonCache[cacheKey]){
     renderLayer(geojsonCache[cacheKey],cityColor,sd);
