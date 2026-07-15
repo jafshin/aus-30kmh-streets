@@ -707,6 +707,17 @@ header .sub a:hover{text-decoration:underline;}
 .map-actions{position:absolute;z-index:900;right:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
 .map-actions a{background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:5px;padding:7px 9px;color:#20639b;text-decoration:none;font-size:11px;font-weight:700;box-shadow:var(--shadow);}
 .map-actions a:hover{background:#f7f8fa;}
+.notice-overlay{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,18,35,.72);backdrop-filter:blur(3px);}
+.notice-overlay[hidden]{display:none;}
+.notice-dialog{width:min(540px,100%);background:var(--card);border-radius:14px;padding:26px 28px;box-shadow:0 20px 60px rgba(0,0,0,.3);border:1px solid var(--border);}
+.notice-kicker{font-size:10px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:#c0392b;margin-bottom:8px;}
+.notice-dialog h2{font-size:22px;line-height:1.2;margin-bottom:12px;}
+.notice-dialog p{font-size:14px;line-height:1.6;color:#4d5562;margin-top:10px;}
+.notice-dialog a{color:#20639b;}
+.notice-actions{display:flex;justify-content:flex-end;margin-top:20px;}
+.notice-actions button{border:0;border-radius:7px;background:#1a1a2e;color:#fff;padding:10px 17px;font-size:13px;font-weight:700;cursor:pointer;}
+.notice-actions button:hover{background:#2c2c4a;}
+.notice-actions button:focus-visible{outline:3px solid #78aee8;outline-offset:2px;}
 .chart-toggle{display:flex;gap:4px;margin-bottom:12px;}
 .mode-btn{padding:4px 12px;border:1.5px solid var(--border);background:var(--card);border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);transition:all .15s;}
 .mode-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
@@ -728,6 +739,16 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 </style>
 </head>
 <body>
+<div class="notice-overlay" id="data-notice" role="dialog" aria-modal="true" aria-labelledby="data-notice-title">
+  <div class="notice-dialog">
+    <div class="notice-kicker">Before you explore</div>
+    <h2 id="data-notice-title">This map is built from OpenStreetMap data</h2>
+    <p>The dashboard shows 30 and 40 km/h speed-limit tags from <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap (OSM)</a>, a community-maintained dataset. It may be incomplete or out of date and is not an official speed-limit register.</p>
+    <p>If you spot an inconsistency, please use <strong>Report an OSM issue</strong> or <strong>Edit this area in OSM</strong> on the map to help improve the source data. Only contribute changes you can verify from signs, official sources or local knowledge.</p>
+    <p>Suggestions or questions are welcome at <a href="mailto:afshin.jafari@rmit.edu.au">afshin.jafari@rmit.edu.au</a>.</p>
+    <div class="notice-actions"><button type="button" id="data-notice-close">Continue to the map</button></div>
+  </div>
+</div>
 <header>
   <h1>30 &amp; 40 km/h Streets in Australian Capital Cities</h1>
   <p class="sub">Publicly accessible, car-permitted roads &nbsp;·&nbsp; Source: OpenStreetMap &nbsp;·&nbsp; July 2026 &nbsp;·&nbsp; <a href="https://github.com/jafshin/aus-30kmh-streets" target="_blank">View code on GitHub</a></p>
@@ -818,6 +839,21 @@ var STATS={"Melbourne":{color:"#c0392b",totalKm:24965,speeds:{"30":{km:54.1,segs
 var CITY_NAMES=["Melbourne","Sydney","Brisbane","Adelaide","Perth"];
 
 var SPEED_COLORS={"30":"#c0392b","40":"#d35400"};
+
+var dataNotice=document.getElementById("data-notice");
+var dataNoticeClose=document.getElementById("data-notice-close");
+function dismissDataNotice(){
+  dataNotice.hidden=true;
+  try{sessionStorage.setItem("osmDataNoticeV2","seen");}catch(e){}
+}
+try{
+  if(sessionStorage.getItem("osmDataNoticeV2")==="seen") dataNotice.hidden=true;
+}catch(e){}
+dataNoticeClose.addEventListener("click",dismissDataNotice);
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&!dataNotice.hidden) dismissDataNotice();
+});
+if(!dataNotice.hidden) setTimeout(function(){dataNoticeClose.focus();},0);
 
 var map=L.map("map");
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
