@@ -1,0 +1,5 @@
+.DS_Store
+data/osm/
+*.gpkg
+*_map.html
+australia_*kmh_summary.csv

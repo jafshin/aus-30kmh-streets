@@ -20,6 +20,6 @@
 { "type": "Feature", "properties": { "osm_id": "576468634", "road_name": "Hindley Street", "highway": "tertiary", "maxspeed_kmh": 30.0, "length_km": 0.016683270540077913 }, "geometry": { "type": "LineString", "coordinates": [ [ 138.5994389, -34.922995 ], [ 138.5996198, -34.9229847 ] ] } },
 { "type": "Feature", "properties": { "osm_id": "780488272", "road_name": "Plane Tree Drive", "highway": "unclassified", "maxspeed_kmh": 30.0, "length_km": 0.032607039300902481 }, "geometry": { "type": "LineString", "coordinates": [ [ 138.6141285, -34.9159444 ], [ 138.613774799999987, -34.9159621 ] ] } },
 { "type": "Feature", "properties": { "osm_id": "782984196", "road_name": "Plane Tree Drive", "highway": "unclassified", "maxspeed_kmh": 30.0, "length_km": 0.13686186672355083 }, "geometry": { "type": "LineString", "coordinates": [ [ 138.613774799999987, -34.9159621 ], [ 138.6122875, -34.9159463 ] ] } },
-{ "type": "Feature", "properties": { "osm_id": "1381355744", "road_name": "Hindley Street", "highway": "tertiary", "maxspeed_kmh": 30.0, "length_km": 0.039631588369464878 }, "geometry": { "type": "LineString", "coordinates": [ [ 138.5929334, -34.9233134 ], [ 138.593363399999987, -34.9232923 ] ] } }
+{ "type": "Feature", "properties": { "osm_id": "1381355744", "road_name": "Hindley Street", "highway": "tertiary", "maxspeed_kmh": 30.0, "length_km": 0.039631489845491828 }, "geometry": { "type": "LineString", "coordinates": [ [ 138.5929334, -34.9233134 ], [ 138.593363399999987, -34.9232923 ] ] } }
 ]
 }
