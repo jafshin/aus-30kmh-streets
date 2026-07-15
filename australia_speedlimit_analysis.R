@@ -2,7 +2,7 @@
 #  Australia Capital Cities – OSM Speed Limit Analysis
 #  Produces results for 30 km/h AND 40 km/h roads
 #
-#  Inputs : <city>_australia.osm.pbf  (one per city)
+#  Inputs : fresh BBBike/OpenStreetMap PBF extracts (downloaded automatically)
 #  Outputs:
 #    <city>_<speed>kmh.gpkg               GeoPackage per city × speed
 #    <city>_<speed>kmh_map.html           Standalone offline map
@@ -26,12 +26,28 @@ library(knitr)
 
 
 # ── 1. Config ─────────────────────────────────────────────────
+OSM_DIR <- Sys.getenv("OSM_DATA_DIR", file.path("data", "osm"))
+UPDATE_OSM <- tolower(Sys.getenv("UPDATE_OSM", "false")) %in% c("1", "true", "yes")
+
+bbbike_city <- function(name, epsg, color) {
+  slug <- tolower(name)
+  base <- sprintf("https://download.bbbike.org/osm/bbbike/%s/%s", name, name)
+  list(
+    name = name,
+    pbf = file.path(OSM_DIR, paste0(slug, ".osm.pbf")),
+    pbf_url = paste0(base, ".osm.pbf"),
+    boundary_url = paste0(base, ".poly"),
+    epsg = epsg,
+    color = color
+  )
+}
+
 CITIES <- list(
-  list(name = "Melbourne", pbf = "melbourne_australia.osm.pbf", epsg = 7855, color = "#c0392b"),
-  list(name = "Sydney",    pbf = "sydney_australia.osm.pbf",    epsg = 7856, color = "#2980b9"),
-  list(name = "Brisbane",  pbf = "brisbane_australia.osm.pbf",  epsg = 7856, color = "#27ae60"),
-  list(name = "Adelaide",  pbf = "adelaide_australia.osm.pbf",  epsg = 7855, color = "#e67e22"),
-  list(name = "Perth",     pbf = "perth_australia.osm.pbf",     epsg = 7850, color = "#8e44ad")
+  bbbike_city("Melbourne", 7855, "#c0392b"),
+  bbbike_city("Sydney",    7856, "#2980b9"),
+  bbbike_city("Brisbane",  7856, "#27ae60"),
+  bbbike_city("Adelaide",  7855, "#e67e22"),
+  bbbike_city("Perth",     7850, "#8e44ad")
 )
 
 SPEEDS <- c(30, 40)
@@ -51,7 +67,43 @@ EXTRA_TAGS <- c("maxspeed", "access", "motor_vehicle", "motorcar")
 SIMPLIFY_TOL <- 12
 
 
-# ── 2. Download libraries once (offline embedding) ────────────
+# ── 2. Download/update free city extracts ────────────────────
+download_extract <- function(city, force = FALSE) {
+  if (file.exists(city$pbf) && !force) {
+    cat(sprintf("[Extract] Reusing %s\n", city$pbf))
+    return(invisible(city$pbf))
+  }
+
+  dir.create(dirname(city$pbf), recursive = TRUE, showWarnings = FALSE)
+  tmp <- paste0(city$pbf, ".download")
+  on.exit(unlink(tmp), add = TRUE)
+  cat(sprintf("[Extract] Downloading fresh %s PBF from BBBike...\n", city$name))
+  download.file(city$pbf_url, tmp, mode = "wb", quiet = FALSE)
+  if (!file.rename(tmp, city$pbf)) {
+    stop(sprintf("Could not move completed download to %s", city$pbf))
+  }
+  invisible(city$pbf)
+}
+
+invisible(lapply(CITIES, download_extract, force = UPDATE_OSM))
+
+parse_maxspeed_kmh <- function(x) {
+  value <- trimws(tolower(x))
+  result <- rep(NA_real_, length(value))
+
+  metric <- grepl("^[0-9]+(\\.[0-9]+)?[[:space:]]*(km/h|kmh|kph)?$", value)
+  result[metric] <- suppressWarnings(as.numeric(sub(
+    "[[:space:]]*(km/h|kmh|kph)$", "", value[metric]
+  )))
+
+  imperial <- grepl("^[0-9]+(\\.[0-9]+)?[[:space:]]*mph$", value)
+  mph <- suppressWarnings(as.numeric(sub("[[:space:]]*mph$", "", value[imperial])))
+  result[imperial] <- round(mph * 1.60934)
+  result
+}
+
+
+# ── 3. Download libraries once (offline embedding) ───────────
 fetch_text <- function(url) {
   tmp <- tempfile()
   download.file(url, tmp, quiet = TRUE, mode = "wb")
@@ -65,7 +117,7 @@ CHART_JS    <- fetch_text("https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/char
 cat("[Libraries] Done.\n")
 
 
-# ── 3. Process each city ──────────────────────────────────────
+# ── 4. Process each city ──────────────────────────────────────
 process_city <- function(city) {
   n <- city$name
   cat(sprintf("\n[%s] Reading OSM PBF...\n", n))
@@ -83,7 +135,7 @@ process_city <- function(city) {
   total_segs    <- nrow(roads_public)
   untagged_segs <- nrow(filter(roads_public, is.na(maxspeed) | maxspeed == ""))
   tagged_segs   <- total_segs - untagged_segs
-  tagged_pct    <- round(tagged_segs / total_segs * 100, 1)
+  tagged_pct    <- if (total_segs > 0) round(tagged_segs / total_segs * 100, 1) else 0
   cat(sprintf("[%s] All car roads: %s segs | tagged: %s (%s%%) | untagged: %s\n",
               n, format(total_segs, big.mark=","),
               format(tagged_segs, big.mark=","), tagged_pct,
@@ -92,16 +144,7 @@ process_city <- function(city) {
   # Step 2: Filter to tagged roads for speed analysis
   roads <- roads_public %>%
     filter(!is.na(maxspeed), maxspeed != "") %>%
-    mutate(
-      maxspeed_kmh = case_when(
-        grepl("^[0-9]+$",      maxspeed)                      ~ as.numeric(maxspeed),
-        grepl("^[0-9]+ km/h$", maxspeed, ignore.case = TRUE)  ~
-          as.numeric(sub(" km/h", "", maxspeed, ignore.case = TRUE)),
-        grepl("^[0-9]+ mph$",  maxspeed, ignore.case = TRUE)  ~
-          round(as.numeric(sub(" mph", "", maxspeed, ignore.case = TRUE)) * 1.60934),
-        TRUE ~ NA_real_
-      )
-    ) %>%
+    mutate(maxspeed_kmh = parse_maxspeed_kmh(maxspeed)) %>%
     filter(!is.na(maxspeed_kmh))
 
   # Total km of ALL public car roads (tagged + untagged) — true denominator
@@ -122,8 +165,8 @@ process_city <- function(city) {
     r   <- filter(roads_proj, maxspeed_kmh == spd)
     km      <- sum(r$length_km, na.rm = TRUE)
     n_r     <- nrow(r)
-    pct     <- round(km / total_km     * 100, 2)
-    pct_all <- round(km / total_km_all * 100, 3)
+    pct     <- if (total_km > 0) round(km / total_km * 100, 2) else 0
+    pct_all <- if (total_km_all > 0) round(km / total_km_all * 100, 3) else 0
 
     cat(sprintf("[%s] %d km/h: %.1f km (%s segs, %.2f%% of tagged, %.3f%% of all)\n",
                 n, spd, km, format(n_r, big.mark = ","), pct, pct_all))
@@ -141,6 +184,7 @@ process_city <- function(city) {
   names(speed_data) <- as.character(SPEEDS)
 
   list(name = n, color = city$color, total_km = total_km,
+       total_km_all = total_km_all,
        total_segs = total_segs, tagged_segs = tagged_segs,
        untagged_segs = untagged_segs, tagged_pct = tagged_pct,
        speeds = speed_data)
@@ -378,6 +422,12 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     'padding-bottom:16px;border-bottom:1px solid var(--border);}\n',
     '.network-total{margin-top:12px;font-size:11px;color:var(--muted);text-align:center;}\n',
     '.network-total strong{color:var(--text);}\n',
+    '.map-actions{position:absolute;z-index:900;right:10px;top:10px;display:flex;',
+    'gap:6px;flex-wrap:wrap;justify-content:flex-end;}\n',
+    '.map-actions a{background:rgba(255,255,255,.96);border:1px solid var(--border);',
+    'border-radius:5px;padding:7px 9px;color:#20639b;text-decoration:none;',
+    'font-size:11px;font-weight:700;box-shadow:var(--shadow);}\n',
+    '.map-actions a:hover{background:#f7f8fa;}\n',
     '.chart-toggle{display:flex;gap:4px;margin-bottom:12px;}\n',
     '.mode-btn{padding:4px 12px;border:1.5px solid var(--border);background:var(--card);',
     'border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;',
@@ -434,6 +484,9 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '<div class="main">\n',
     '  <div id="map-wrap" style="position:relative;overflow:hidden;">\n',
     '    <div id="map"></div>\n',
+    '    <div class="map-actions">',
+    '<a id="osm-note" target="_blank" rel="noopener">Report an OSM issue</a>',
+    '<a id="osm-edit" target="_blank" rel="noopener">Edit this area in OSM</a></div>\n',
     '    <div class="loading-overlay" id="loading">Loading map data…</div>\n',
     '  </div>\n',
     '  <div class="side">\n',
@@ -472,12 +525,13 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     ' a volunteer-maintained platform. Speed limit tags may be incomplete or out of date.',
     ' Only roads with an explicit maxspeed tag are included.',
     ' The authors accept no responsibility for the accuracy of this information.',
-    ' OSM metropolitan extracts provided by <a href="https://interline.io" target="_blank">Interline.io</a>;',
-    ' geographic boundaries reflect Interline metro area definitions.</div>\n',
+    ' Daily PBF extracts and city boundaries are provided free by',
+    ' <a href="https://download.bbbike.org/osm/bbbike/" target="_blank">BBBike</a>.',
+    ' Use the map links to report a note or correct OSM; please only map verifiable, on-the-ground limits.</div>\n',
     '    <div class="footer-block"><span class="badge">LICENCE</span>',
     ' Code: <a href="https://github.com/jafshin/aus-30kmh-streets/blob/main/LICENSE"',
     ' target="_blank">MIT</a> &nbsp;·&nbsp;',
-    ' Data &amp; findings: <a href="https://creativecommons.org/licenses/by/4.0/"',
+    ' Analysis &amp; figures: <a href="https://creativecommons.org/licenses/by/4.0/"',
     ' target="_blank">CC BY 4.0</a> &nbsp;·&nbsp;',
     ' Map data &copy; <a href="https://www.openstreetmap.org/copyright"',
     ' target="_blank">OpenStreetMap contributors</a> (ODbL)</div>\n',
@@ -507,6 +561,18 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '  attribution:"© <a href=\'https://www.openstreetmap.org/copyright\'>OpenStreetMap</a> contributors"\n',
     '}).addTo(map);\n',
     'map.setView([-27, 133], 4);\n\n',
+    'function updateOsmLinks(){\n',
+    '  var c=map.getCenter(), z=Math.max(map.getZoom(),16);\n',
+    '  var hash="#map="+z+"/"+c.lat.toFixed(6)+"/"+c.lng.toFixed(6);\n',
+    '  document.getElementById("osm-note").href="https://www.openstreetmap.org/note/new"+hash;\n',
+    '  document.getElementById("osm-edit").href="https://www.openstreetmap.org/edit?editor=id"+hash;\n',
+    '}\n',
+    'map.on("moveend",updateOsmLinks); updateOsmLinks();\n\n',
+    'function escapeHtml(value){\n',
+    '  var el=document.createElement("div");\n',
+    '  el.textContent=value==null?"":String(value);\n',
+    '  return el.innerHTML;\n',
+    '}\n\n',
 
     # Chart init (no data yet)
     'var barChart=new Chart(document.getElementById("chart").getContext("2d"),{\n',
@@ -660,9 +726,11 @@ make_github_page <- function(results, leaflet_css, leaflet_js, chartjs) {
     '    style:function(){return{color:color,weight:activeSpeed==="30"?3:2.5,opacity:0.85};},\n',
     '    onEachFeature:function(f,l){\n',
     '      var p=f.properties;\n',
-    '      l.bindPopup("<b>"+(p.road_name||"Unnamed road")+"</b><br>"\n',
-    '        +"Type: "+p.highway+"<br>"\n',
-    '        +"Length: "+(p.length_km?p.length_km.toFixed(3)+" km":"?"));\n',
+    '      var osmUrl="https://www.openstreetmap.org/way/"+encodeURIComponent(p.osm_id);\n',
+    '      l.bindPopup("<b>"+escapeHtml(p.road_name||"Unnamed road")+"</b><br>"\n',
+    '        +"Type: "+escapeHtml(p.highway)+"<br>"\n',
+    '        +"Length: "+(p.length_km?p.length_km.toFixed(3)+" km":"?")+"<br>"\n',
+    '        +"<a href=\\\""+osmUrl+"\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">View or edit this OSM way</a>");\n',
     '    }\n',
     '  }).addTo(map);\n',
     '  var b=sd.bounds;\n',

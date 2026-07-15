@@ -1,0 +1,50 @@
+name: Refresh OpenStreetMap data
+
+on:
+  schedule:
+    - cron: "20 17 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::osmextract
+            any::sf
+            any::dplyr
+            any::tibble
+            any::knitr
+
+      - name: Download fresh extracts and rebuild the map
+        env:
+          UPDATE_OSM: "true"
+        run: Rscript australia_speedlimit_analysis.R
+
+      - name: Open or update the data refresh pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: automated/osm-refresh
+          delete-branch: true
+          add-paths: |
+            docs/**
+          commit-message: "data: refresh OpenStreetMap extracts"
+          title: "data: refresh OpenStreetMap extracts"
+          body: |
+            Automated weekly refresh from the free BBBike OpenStreetMap PBF extracts.
+
+            Review the changed road coverage and merge when ready.

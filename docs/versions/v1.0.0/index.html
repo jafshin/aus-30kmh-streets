@@ -701,13 +701,10 @@ header .sub a:hover{text-decoration:underline;}
 .chart-box{padding:20px;}
 .chart-heading{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
 .chart-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);}
-.context-text{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
-.network-total{margin-top:12px;font-size:11px;color:var(--muted);text-align:center;}
-.network-total strong{color:var(--text);}
-.map-actions{position:absolute;z-index:900;right:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
-.map-actions a{background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:5px;padding:7px 9px;color:#20639b;text-decoration:none;font-size:11px;font-weight:700;box-shadow:var(--shadow);}
-.map-actions a:hover{background:#f7f8fa;}
 .chart-toggle{display:flex;gap:4px;margin-bottom:12px;}
+.context-text{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.network-total{margin-top:12px;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.1px;}
+.network-total strong{color:var(--text);}
 .mode-btn{padding:4px 12px;border:1.5px solid var(--border);background:var(--card);border-radius:12px;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);transition:all .15s;}
 .mode-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
 footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px solid var(--border);flex-shrink:0;}
@@ -722,6 +719,7 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
   .main{grid-template-columns:1fr;height:auto;}
   #map{height:65vw;min-height:300px;}
   .side{border-left:none;border-top:1px solid var(--border);}
+  .main{grid-template-columns:1fr;}
   .footer-inner{flex-direction:column;}
   .footer-block{border-right:none;border-bottom:1px solid var(--border);}
 }
@@ -730,7 +728,7 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 <body>
 <header>
   <h1>30 &amp; 40 km/h Streets in Australian Capital Cities</h1>
-  <p class="sub">Publicly accessible, car-permitted roads &nbsp;·&nbsp; Source: OpenStreetMap &nbsp;·&nbsp; July 2026 &nbsp;·&nbsp; <a href="https://github.com/jafshin/aus-30kmh-streets" target="_blank">View code on GitHub</a></p>
+  <p class="sub">Publicly accessible, car-permitted roads &nbsp;·&nbsp; Source: OpenStreetMap &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; <a href="https://github.com/jafshin/aus-30kmh-streets" target="_blank">View code on GitHub</a></p>
 </header>
 <div class="controls">
   <div class="speed-group">
@@ -746,7 +744,6 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 <div class="main">
   <div id="map-wrap" style="position:relative;overflow:hidden;">
     <div id="map"></div>
-    <div class="map-actions"><a id="osm-note" target="_blank" rel="noopener">Report an OSM issue</a><a id="osm-edit" target="_blank" rel="noopener">Edit this area in OSM</a></div>
     <div class="loading-overlay" id="loading">Loading map data…</div>
   </div>
   <div class="side">
@@ -773,8 +770,8 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 </div>
 <footer>
   <div class="footer-inner">
-    <div class="footer-block"><span class="badge">DISCLAIMER</span> All data is sourced from <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a>, a volunteer-maintained platform. Speed limit tags may be incomplete or out of date. Only roads with an explicit maxspeed tag are included. The authors accept no responsibility for the accuracy of this information. Daily PBF extracts and city boundaries are provided free by <a href="https://download.bbbike.org/osm/bbbike/" target="_blank">BBBike</a>. Use the map links to report a note or correct OSM; please only map verifiable, on-the-ground limits.</div>
-    <div class="footer-block"><span class="badge">LICENCE</span> Code: <a href="https://github.com/jafshin/aus-30kmh-streets/blob/main/LICENSE" target="_blank">MIT</a> &nbsp;·&nbsp; Analysis &amp; figures: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a> &nbsp;·&nbsp; Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> (ODbL)</div>
+    <div class="footer-block"><span class="badge">DISCLAIMER</span> All data is sourced from <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a>, a volunteer-maintained platform. Speed limit tags may be incomplete or out of date. Only roads with an explicit maxspeed tag are included. The authors accept no responsibility for the accuracy of this information. OSM metropolitan extracts provided by <a href="https://interline.io" target="_blank">Interline.io</a>; geographic boundaries reflect Interline metro area definitions.</div>
+    <div class="footer-block"><span class="badge">LICENCE</span> Code: <a href="https://github.com/jafshin/aus-30kmh-streets/blob/main/LICENSE" target="_blank">MIT</a> &nbsp;·&nbsp; Data &amp; findings: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a> &nbsp;·&nbsp; Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> (ODbL)</div>
     <div class="footer-block"><span class="badge">CONTACT</span> Questions or feedback?<br> <a href="mailto:afshin.jafari@rmit.edu.au">afshin.jafari@rmit.edu.au</a></div>
   </div>
 </footer>
@@ -810,11 +807,11 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 </script>
 <script>
 // ── Embedded stats (tiny) ─────────────────────────────
-var STATS={"Melbourne":{color:"#c0392b",totalKm:24965,speeds:{"30":{km:54.1,segs:559,pct:0.52,pct_all:0.217,file:"data/melbourne_30.geojson",bounds:[[-37.9309827,144.6709165],[-37.7120332,145.2854752]]},"40":{km:950.4,segs:9389,pct:9.07,pct_all:3.807,file:"data/melbourne_40.geojson",bounds:[[-38.0217829,144.6751995],[-37.5295629,145.301481]]}}},
-"Sydney":{color:"#2980b9",totalKm:17291,speeds:{"30":{km:45.3,segs:320,pct:0.59,pct_all:0.262,file:"data/sydney_30.geojson",bounds:[[-34.039011,150.8366138],[-33.7296886,151.3026131]]},"40":{km:552.2,segs:5823,pct:7.13,pct_all:3.194,file:"data/sydney_40.geojson",bounds:[[-34.0421802,150.8465458],[-33.6890369,151.2998106]]}}},
-"Brisbane":{color:"#27ae60",totalKm:17681,speeds:{"30":{km:20.8,segs:168,pct:0.22,pct_all:0.118,file:"data/brisbane_30.geojson",bounds:[[-27.6840921,152.7556923],[-27.2161016,153.2862756]]},"40":{km:723.7,segs:5853,pct:7.74,pct_all:4.093,file:"data/brisbane_40.geojson",bounds:[[-27.7296129,152.7387679],[-27.1771675,153.309878]]}}},
-"Adelaide":{color:"#e67e22",totalKm:7987,speeds:{"30":{km:3.4,segs:18,pct:0.08,pct_all:0.043,file:"data/adelaide_30.geojson",bounds:[[-34.9328733,138.5805019],[-34.9106955,138.6793609]]},"40":{km:652.7,segs:3177,pct:15.06,pct_all:8.172,file:"data/adelaide_40.geojson",bounds:[[-35.0245384,138.4802481],[-34.7812869,138.7177792]]}}},
-"Perth":{color:"#8e44ad",totalKm:17504,speeds:{"30":{km:48.2,segs:306,pct:0.81,pct_all:0.275,file:"data/perth_30.geojson",bounds:[[-32.1059183,115.745504],[-31.7332696,116.0112529]]},"40":{km:234.5,segs:1609,pct:3.94,pct_all:1.34,file:"data/perth_40.geojson",bounds:[[-32.226378,115.695849],[-31.6895382,116.1030717]]}}}};
+var STATS={"Melbourne":{color:"#c0392b",totalKm:49651,totalSegs:333942,untaggedSegs:218693,taggedPct:34.5,speeds:{"30":{km:75.3,segs:595,pct:0.4,pct_all:0.152,file:"data/melbourne_30.geojson",bounds:[[-38.468576,144.2993976],[-37.6044633,145.3475161]]},"40":{km:1131.3,segs:10465,pct:6.08,pct_all:2.28,file:"data/melbourne_40.geojson",bounds:[[-38.5440516,144.2742339],[-37.3429823,145.8079468]]}}},
+"Sydney":{color:"#2980b9",totalKm:23301,totalSegs:175829,untaggedSegs:111775,taggedPct:36.4,speeds:{"30":{km:56.4,segs:325,pct:0.56,pct_all:0.242,file:"data/sydney_30.geojson",bounds:[[-34.0834795,150.7562181],[-33.6525045,151.3026131]]},"40":{km:578.1,segs:5926,pct:5.71,pct_all:2.48,file:"data/sydney_40.geojson",bounds:[[-34.0796905,150.6281295],[-33.6447895,151.3186733]]}}},
+"Brisbane":{color:"#27ae60",totalKm:19583,totalSegs:151562,untaggedSegs:75427,taggedPct:50.2,speeds:{"30":{km:21.4,segs:145,pct:0.2,pct_all:0.109,file:"data/brisbane_30.geojson",bounds:[[-27.6840921,152.7556923],[-27.0581665,153.2862756]]},"40":{km:756.4,segs:5885,pct:7.23,pct_all:3.86,file:"data/brisbane_40.geojson",bounds:[[-27.7185454,152.6755683],[-27.0171119,153.309878]]}}},
+"Adelaide":{color:"#e67e22",totalKm:13741,totalSegs:80907,untaggedSegs:48588,taggedPct:39.9,speeds:{"30":{km:3.4,segs:18,pct:0.05,pct_all:0.025,file:"data/adelaide_30.geojson",bounds:[[-34.9328733,138.5805019],[-34.9106955,138.6793609]]},"40":{km:563.4,segs:2568,pct:9.08,pct_all:4.1,file:"data/adelaide_40.geojson",bounds:[[-35.1883401,138.4801628],[-34.5969038,138.81762]]}}},
+"Perth":{color:"#8e44ad",totalKm:19832,totalSegs:129096,untaggedSegs:90844,taggedPct:29.6,speeds:{"30":{km:49.3,segs:321,pct:0.74,pct_all:0.249,file:"data/perth_30.geojson",bounds:[[-32.3275394,115.745504],[-31.7332696,116.0112529]]},"40":{km:269.1,segs:1731,pct:4.01,pct_all:1.36,file:"data/perth_40.geojson",bounds:[[-32.3576633,115.4504339],[-31.7121256,116.1030717]]}}}};
 var CITY_NAMES=["Melbourne","Sydney","Brisbane","Adelaide","Perth"];
 
 var SPEED_COLORS={"30":"#c0392b","40":"#d35400"};
@@ -825,20 +822,6 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
   attribution:"© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
 }).addTo(map);
 map.setView([-27, 133], 4);
-
-function updateOsmLinks(){
-  var c=map.getCenter(), z=Math.max(map.getZoom(),16);
-  var hash="#map="+z+"/"+c.lat.toFixed(6)+"/"+c.lng.toFixed(6);
-  document.getElementById("osm-note").href="https://www.openstreetmap.org/note/new"+hash;
-  document.getElementById("osm-edit").href="https://www.openstreetmap.org/edit?editor=id"+hash;
-}
-map.on("moveend",updateOsmLinks); updateOsmLinks();
-
-function escapeHtml(value){
-  var el=document.createElement("div");
-  el.textContent=value==null?"":String(value);
-  return el.innerHTML;
-}
 
 var barChart=new Chart(document.getElementById("chart").getContext("2d"),{
   type:"bar",
@@ -870,11 +853,6 @@ var activeSpeed=null, activeCityIdx=-1;
 var activeLayer=null;
 var geojsonCache={};
 
-var SPEED_CONTEXT={
-  "30":"30 km/h zones are explicitly designated lower-speed areas, typically found in activity centres, shared zones or residential precincts where pedestrian safety is prioritised. In Victoria, councils can apply to trial or permanently designate 30 km/h zones under state speed zoning policy.",
-  "40":"40 km/h zones include local area traffic management precincts, shopping strips and areas with high pedestrian activity. They represent a middle tier between the standard urban default (50 km/h) and the slower 30 km/h zones found in pedestrian-priority areas."
-};
-
 var chartMode="km";
 function setChartMode(mode){
   chartMode=mode;
@@ -896,6 +874,11 @@ function updateChart(){
   barChart.update("none");
 }
 
+var SPEED_CONTEXT = {
+  "30": "30 km/h zones are explicitly designated lower-speed areas, typically found in activity centres, shared zones or residential precincts where pedestrian safety is prioritised. In Victoria, councils can apply to trial or permanently designate 30 km/h zones under state speed zoning policy.",
+  "40": "40 km/h zones include local area traffic management precincts, shopping strips and areas with high pedestrian activity. They represent a middle tier between the standard urban default (50 km/h) and the slower 30 km/h zones found in pedestrian-priority areas."
+};
+
 function setSpeed(spd){
   activeSpeed=String(spd);
   var sc=SPEED_COLORS[activeSpeed];
@@ -912,6 +895,7 @@ function setSpeed(spd){
     b.style.borderColor=on?sc:"";
     b.style.color=on?"#fff":"";
   });
+  // update chart data for new speed
   updateChart();
   // reload map if a city is already selected
   if(activeCityIdx>=0) loadCityLayer(activeCityIdx);
@@ -977,11 +961,9 @@ function renderLayer(gj,color,sd){
     style:function(){return{color:color,weight:activeSpeed==="30"?3:2.5,opacity:0.85};},
     onEachFeature:function(f,l){
       var p=f.properties;
-      var osmUrl="https://www.openstreetmap.org/way/"+encodeURIComponent(p.osm_id);
-      l.bindPopup("<b>"+escapeHtml(p.road_name||"Unnamed road")+"</b><br>"
-        +"Type: "+escapeHtml(p.highway)+"<br>"
-        +"Length: "+(p.length_km?p.length_km.toFixed(3)+" km":"?")+"<br>"
-        +"<a href=\""+osmUrl+"\" target=\"_blank\" rel=\"noopener\">View or edit this OSM way</a>");
+      l.bindPopup("<b>"+(p.road_name||"Unnamed road")+"</b><br>"
+        +"Type: "+p.highway+"<br>"
+        +"Length: "+(p.length_km?p.length_km.toFixed(3)+" km":"?"));
     }
   }).addTo(map);
   var b=sd.bounds;
