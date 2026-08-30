@@ -751,7 +751,7 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 </div>
 <header>
   <h1>30 &amp; 40 km/h Streets in Australian Capital Cities</h1>
-  <p class="sub">Publicly accessible, car-permitted roads &nbsp;·&nbsp; Source: OpenStreetMap &nbsp;·&nbsp; July 2026 &nbsp;·&nbsp; <a href="https://github.com/jafshin/aus-30kmh-streets" target="_blank">View code on GitHub</a></p>
+  <p class="sub">Publicly accessible, car-permitted roads &nbsp;·&nbsp; Source: OpenStreetMap &nbsp;·&nbsp; August 2026 &nbsp;·&nbsp; <a href="https://github.com/jafshin/aus-30kmh-streets" target="_blank">View code on GitHub</a></p>
 </header>
 <div class="controls">
   <div class="speed-group">
@@ -831,11 +831,11 @@ footer{font-size:11px;color:var(--muted);background:var(--card);border-top:1px s
 </script>
 <script>
 // ── Embedded stats (tiny) ─────────────────────────────
-var STATS={"Melbourne":{color:"#c0392b",totalKm:24965,speeds:{"30":{km:54.1,segs:559,pct:0.52,pct_all:0.217,file:"data/melbourne_30.geojson",bounds:[[-37.9309827,144.6709165],[-37.7120332,145.2854752]]},"40":{km:950.4,segs:9389,pct:9.07,pct_all:3.807,file:"data/melbourne_40.geojson",bounds:[[-38.0217829,144.6751995],[-37.5295629,145.301481]]}}},
-"Sydney":{color:"#2980b9",totalKm:17291,speeds:{"30":{km:45.3,segs:320,pct:0.59,pct_all:0.262,file:"data/sydney_30.geojson",bounds:[[-34.039011,150.8366138],[-33.7296886,151.3026131]]},"40":{km:552.2,segs:5823,pct:7.13,pct_all:3.194,file:"data/sydney_40.geojson",bounds:[[-34.0421802,150.8465458],[-33.6890369,151.2998106]]}}},
-"Brisbane":{color:"#27ae60",totalKm:17681,speeds:{"30":{km:20.8,segs:168,pct:0.22,pct_all:0.118,file:"data/brisbane_30.geojson",bounds:[[-27.6840921,152.7556923],[-27.2161016,153.2862756]]},"40":{km:723.7,segs:5853,pct:7.74,pct_all:4.093,file:"data/brisbane_40.geojson",bounds:[[-27.7296129,152.7387679],[-27.1771675,153.309878]]}}},
-"Adelaide":{color:"#e67e22",totalKm:7987,speeds:{"30":{km:3.4,segs:18,pct:0.08,pct_all:0.043,file:"data/adelaide_30.geojson",bounds:[[-34.9328733,138.5805019],[-34.9106955,138.6793609]]},"40":{km:652.7,segs:3177,pct:15.06,pct_all:8.172,file:"data/adelaide_40.geojson",bounds:[[-35.0245384,138.4802481],[-34.7812869,138.7177792]]}}},
-"Perth":{color:"#8e44ad",totalKm:17504,speeds:{"30":{km:48.2,segs:306,pct:0.81,pct_all:0.275,file:"data/perth_30.geojson",bounds:[[-32.1059183,115.745504],[-31.7332696,116.0112529]]},"40":{km:234.5,segs:1609,pct:3.94,pct_all:1.34,file:"data/perth_40.geojson",bounds:[[-32.226378,115.695849],[-31.6895382,116.1030717]]}}}};
+var STATS={"Melbourne":{color:"#c0392b",totalKm:24990,speeds:{"30":{km:54.1,segs:563,pct:0.51,pct_all:0.216,file:"data/melbourne_30.geojson",bounds:[[-37.9309827,144.6709165],[-37.7120332,145.2854752]]},"40":{km:965.2,segs:9604,pct:9.18,pct_all:3.862,file:"data/melbourne_40.geojson",bounds:[[-38.0217829,144.6751995],[-37.5295629,145.301481]]}}},
+"Sydney":{color:"#2980b9",totalKm:17305,speeds:{"30":{km:45.3,segs:323,pct:0.58,pct_all:0.262,file:"data/sydney_30.geojson",bounds:[[-34.039011,150.8366138],[-33.7296886,151.3026131]]},"40":{km:557.3,segs:5924,pct:7.17,pct_all:3.221,file:"data/sydney_40.geojson",bounds:[[-34.0421802,150.8465458],[-33.6890369,151.2998106]]}}},
+"Brisbane":{color:"#27ae60",totalKm:17697,speeds:{"30":{km:20.8,segs:171,pct:0.22,pct_all:0.118,file:"data/brisbane_30.geojson",bounds:[[-27.6840921,152.7556923],[-27.2161016,153.2862756]]},"40":{km:727.1,segs:5880,pct:7.75,pct_all:4.109,file:"data/brisbane_40.geojson",bounds:[[-27.7296129,152.7387679],[-27.1771675,153.309878]]}}},
+"Adelaide":{color:"#e67e22",totalKm:8024,speeds:{"30":{km:3.4,segs:18,pct:0.08,pct_all:0.042,file:"data/adelaide_30.geojson",bounds:[[-34.9328733,138.5805019],[-34.9106955,138.6793609]]},"40":{km:654.7,segs:3212,pct:15.06,pct_all:8.16,file:"data/adelaide_40.geojson",bounds:[[-35.0245384,138.4802481],[-34.7812869,138.7177792]]}}},
+"Perth":{color:"#8e44ad",totalKm:17530,speeds:{"30":{km:48.2,segs:306,pct:0.81,pct_all:0.275,file:"data/perth_30.geojson",bounds:[[-32.1059183,115.745504],[-31.7332696,116.0112529]]},"40":{km:237.2,segs:1628,pct:3.97,pct_all:1.353,file:"data/perth_40.geojson",bounds:[[-32.226378,115.695849],[-31.6895382,116.1030717]]}}}};
 var CITY_NAMES=["Melbourne","Sydney","Brisbane","Adelaide","Perth"];
 
 var SPEED_COLORS={"30":"#c0392b","40":"#d35400"};
