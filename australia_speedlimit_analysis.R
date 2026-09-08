@@ -68,7 +68,17 @@ SIMPLIFY_TOL <- 12
 
 
 # ── 2. Download/update free city extracts ────────────────────
-download_extract <- function(city, force = FALSE) {
+# R's download.file() default timeout is 60s. The city PBFs are 50-90 MB each
+# and BBBike is a free, sometimes heavily throttled service, so 60s is routinely
+# too short and the scheduled refresh fails mid-download. Raise the ceiling and
+# retry, rather than letting one slow response kill the whole run.
+options(timeout = max(3600, getOption("timeout")))
+
+# Anything smaller than this is a truncated download or an HTML error page,
+# not a real extract.
+MIN_PBF_BYTES <- 5 * 1024^2
+
+download_extract <- function(city, force = FALSE, attempts = 3) {
   if (file.exists(city$pbf) && !force) {
     cat(sprintf("[Extract] Reusing %s\n", city$pbf))
     return(invisible(city$pbf))
@@ -77,8 +87,39 @@ download_extract <- function(city, force = FALSE) {
   dir.create(dirname(city$pbf), recursive = TRUE, showWarnings = FALSE)
   tmp <- paste0(city$pbf, ".download")
   on.exit(unlink(tmp), add = TRUE)
-  cat(sprintf("[Extract] Downloading fresh %s PBF from BBBike...\n", city$name))
-  download.file(city$pbf_url, tmp, mode = "wb", quiet = FALSE)
+
+  for (attempt in seq_len(attempts)) {
+    cat(sprintf("[Extract] Downloading %s PBF from BBBike (attempt %d/%d)...\n",
+                city$name, attempt, attempts))
+
+    ok <- tryCatch({
+      download.file(city$pbf_url, tmp, mode = "wb", quiet = FALSE)
+      TRUE
+    }, error = function(e) {
+      cat(sprintf("[Extract] %s failed: %s\n", city$name, conditionMessage(e)))
+      FALSE
+    })
+
+    size <- if (file.exists(tmp)) file.size(tmp) else 0
+    if (ok && size >= MIN_PBF_BYTES) {
+      cat(sprintf("[Extract] %s downloaded (%.1f MB)\n", city$name, size / 1024^2))
+      break
+    }
+
+    if (ok) {
+      cat(sprintf("[Extract] %s returned only %.2f MB - treating as failed\n",
+                  city$name, size / 1024^2))
+    }
+    unlink(tmp)
+
+    if (attempt == attempts) {
+      stop(sprintf("Could not download %s after %d attempts", city$name, attempts))
+    }
+    backoff <- 30 * attempt
+    cat(sprintf("[Extract] Retrying %s in %ds...\n", city$name, backoff))
+    Sys.sleep(backoff)
+  }
+
   if (!file.rename(tmp, city$pbf)) {
     stop(sprintf("Could not move completed download to %s", city$pbf))
   }
